@@ -1,1 +1,1 @@
-# Placeholder for Procfile
+worker: python dubai_guide_ai_bot.py

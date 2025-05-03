@@ -1,1 +1,1 @@
-# Placeholder for runtime.txt
+python-3.10

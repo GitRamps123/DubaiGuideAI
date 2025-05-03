@@ -1,21 +1,16 @@
 
-# DubaiGuideAI - Telegram Bot
+# Come To Dubai AI Guide Bot (Webhook Version)
 
-This is a smart multilingual Dubai Tourism AI Assistant powered by OpenAI GPT-4o and Telegram Bot API.
+This version uses Webhook for production deployment to avoid Telegram polling conflicts.
 
-## Features
-- Answers Dubai tourist questions
-- Provides suggestions on hotels, food, events, and attractions
-- Uses OpenAI GPT-4o for smarter answers
-- Can be deployed on Railway or Render easily
+## How To Deploy (Railway or other platforms)
 
-## Setup
+1. Update the webhook URL in `bot.py` (replace `YOUR-RAILWAY-APP-URL`).
+2. Upload all files to your GitHub project or deploy directly on Railway.
+3. Set environment variables:
+    - BOT_TOKEN (Telegram bot token)
+    - PORT (optional, default is 8443)
+4. Deploy the app.
 
-1. Clone the repo or upload the files to Railway or Render
-2. Add the following ENV variables:
-   - TELEGRAM_BOT_TOKEN
-   - OPENAI_API_KEY
-3. Deploy and run the bot!
+✅ Once deployed, Telegram will send updates to your webhook endpoint without polling.
 
-## License
-MIT License

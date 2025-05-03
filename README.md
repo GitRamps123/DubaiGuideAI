@@ -1,19 +1,21 @@
-# Dubai Guide AI - Telegram Bot
 
-A multilingual AI-powered Telegram bot to help tourists with Dubai attractions, hotels, food, events, visa info and more.
+# DubaiGuideAI - Telegram Bot
 
-## Deployment (Railway)
-1. Upload this repo to GitHub.
-2. Connect GitHub repo to Railway.
-3. Add Environment Variables:
-   - TELEGRAM_BOT_TOKEN
-   - OPENAI_API_KEY
-4. Railway will auto-deploy and run the bot 24/7.
+This is a smart multilingual Dubai Tourism AI Assistant powered by OpenAI GPT-4o and Telegram Bot API.
 
 ## Features
-- Multilingual (English, Arabic, Hindi, Urdu, Russian, Chinese, German, French)
-- Fully AI-powered responses
-- No buttons → natural conversational flow
+- Answers Dubai tourist questions
+- Provides suggestions on hotels, food, events, and attractions
+- Uses OpenAI GPT-4o for smarter answers
+- Can be deployed on Railway or Render easily
 
-## Start Command
-worker: python dubai_guide_ai_bot.py
+## Setup
+
+1. Clone the repo or upload the files to Railway or Render
+2. Add the following ENV variables:
+   - TELEGRAM_BOT_TOKEN
+   - OPENAI_API_KEY
+3. Deploy and run the bot!
+
+## License
+MIT License

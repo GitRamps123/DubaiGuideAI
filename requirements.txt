@@ -1,3 +1,1 @@
-flask
-openai
-langchain
+python-telegram-bot==20.6

@@ -1,27 +1,25 @@
-from flask import Flask, request, jsonify
-from langchain.chat_models import ChatOpenAI
-from langchain.memory import ConversationBufferMemory
-from langchain.chains import ConversationChain
+import logging
 import os
+from telegram import Update
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 
-app = Flask(__name__)
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
 
-llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.5)
-memory = ConversationBufferMemory(return_messages=True)
-conversation = ConversationChain(llm=llm, memory=memory)
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-@app.route("/", methods=["GET"])
-def home():
-    return "Dubai Guide AI is running!"
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("👋 Welcome to Dubai Guide AI — I'm ready to help you!")
 
-@app.route("/chat", methods=["POST"])
-def chat():
-    data = request.json
-    user_message = data.get("message")
-    if not user_message:
-        return jsonify({"error": "No message provided"}), 400
-    ai_response = conversation.run(user_message)
-    return jsonify({"response": ai_response})
+async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("🧠 I'm thinking...")
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+if __name__ == '__main__':
+    print("🚀 Dubai Guide AI bot is starting...")
+    app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
+    app.run_polling()

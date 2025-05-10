@@ -1,63 +1,30 @@
-
+# Dubai Guide AI Bot with Memory Upgrade
 import os
-import logging
-from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
-from openai import OpenAI
-from dotenv import load_dotenv
+import telebot
+import openai
 
-load_dotenv()
+bot = telebot.TeleBot(os.getenv("TELEGRAM_TOKEN"))
+openai.api_key = os.getenv("OPENAI_API_KEY")
+conversation_history = {}
 
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+def get_chat_response(chat_id, user_input):
+    history = conversation_history.get(chat_id, [])
+    prompt = "\n".join(history + [f"User: {user_input}", "Bot:"])
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=150
+    )
+    answer = response.choices[0].message.content.strip()
+    conversation_history[chat_id] = (history + [f"User: {user_input}", f"Bot: {answer}"])[-10:]
+    return answer
 
-openai = OpenAI(api_key=OPENAI_API_KEY)
-
-logging.basicConfig(level=logging.INFO)
-
-# Simple in-memory context store (for single message memory)
-user_context = {}
-
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("👋 Welcome to Dubai Guide AI – your friendly travel companion! Ask me anything about Dubai: food, attractions, transport, or hidden gems 🌟.")
-
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    user_message = update.message.text
-
-    prev = user_context.get(user_id, {})
-    prompt = f"""
-You are Dubai Guide AI, a friendly and helpful assistant for tourists in Dubai. Always stay on topic. Be cheerful, warm, and brief. If user asks about other countries, politely redirect to Dubai topics.
-
-Previous question: {prev.get('user', 'N/A')}
-Previous answer: {prev.get('bot', 'N/A')}
-User follow-up: {user_message}
-
-Answer:
-"""
-
+@bot.message_handler(func=lambda message: True)
+def handle_message(message):
     try:
-        response = openai.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You're Dubai Guide AI. Respond politely and informatively."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.6,
-            max_tokens=400
-        )
-        reply = response.choices[0].message.content.strip()
-
-        await update.message.reply_text(reply)
-
-        # Save context
-        user_context[user_id] = {"user": user_message, "bot": reply}
+        response = get_chat_response(message.chat.id, message.text)
+        bot.send_message(message.chat.id, response)
     except Exception as e:
-        logging.error(e)
-        await update.message.reply_text("Oops! Something went wrong. Please try again in a moment.")
+        bot.send_message(message.chat.id, "Sorry, something went wrong.")
 
-if __name__ == "__main__":
-    app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    app.run_polling()
+bot.infinity_polling()

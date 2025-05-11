@@ -1,1 +1,1 @@
-worker: python bot.py
+python3 dubai_guide_ai_bot.py

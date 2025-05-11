@@ -1,1 +1,1 @@
-web: python3 dubai_guide_ai_bot.py
+worker: python3 dubai_guide_ai_bot.py

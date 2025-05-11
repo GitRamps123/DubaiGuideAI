@@ -1,57 +1,57 @@
+# encoding: utf-8
+import logging
 import os
 import openai
-from telegram import Update, ForceReply
-from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
+from telegram import Update
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
-SYSTEM_PROMPT = """
-You are Dubai Guide AI – a cheerful, helpful, and knowledgeable travel assistant for tourists visiting Dubai.
-You specialize in providing fun, friendly, and informative responses about attractions, food, shopping, culture, nightlife, transportation, and visas related to Dubai. Maintain a conversational, engaging tone.
-Always try to connect follow-up questions to the previous topic unless the user shifts context.
-"""
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 
-user_context = {}
+# Enable logging
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user = update.effective_user
-    welcome_message = (
-        f"👋 Hello and welcome to Dubai Guide AI! 🌟 I’m your personal travel assistant for everything Dubai. "
-        f"Ask me about places to visit, food to try, transportation tips, or anything else you’re curious about. 🏖️✈️"
-    )
-    await update.message.reply_text(welcome_message)
+# Friendly greeting message
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("👋 Hello and welcome to Dubai Guide AI! 🌟 I’m your personal travel assistant for everything Dubai. Ask me about places to visit, food to try, transportation tips, or anything else you’re curious about. 🏖️✈️")
 
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    chat_id = update.effective_chat.id
+# Main handler for messages
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_input = update.message.text
-
-    # Track user context
-    history = user_context.get(chat_id, [])
-    history.append(f"User: {user_input}")
-    if len(history) > 6:
-        history = history[-6:]  # Keep only the last 6 messages
-    user_context[chat_id] = history
-
-    prompt = SYSTEM_PROMPT + "\n" + "\n".join(history) + "\nAssistant:"
     try:
+        # Memory: use a basic prompt context structure
+        messages = [
+            {"role": "system", "content": "You are a warm, friendly, and very helpful travel assistant. You only provide information related to Dubai."},
+            {"role": "user", "content": user_input}
+        ]
+
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
-            messages=[{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": prompt}],
+            messages=messages,
             temperature=0.7,
             max_tokens=500
         )
-        reply = response.choices[0].message['content'].strip()
+
+        reply = response.choices[0].message.content.strip()
+        await update.message.reply_text(reply)
+
     except Exception as e:
-        reply = "I'm sorry, something went wrong. Please try again later."
+        logger.error(f"Error: {e}")
+        await update.message.reply_text("🤖 Sorry, something went wrong. Please try again later.")
 
-    history.append(f"Assistant: {reply}")
-    user_context[chat_id] = history
-    await update.message.reply_text(reply)
+# Error handler
+async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
+    logger.warning(f'Update caused error: {context.error}')
 
-def main() -> None:
-    application = Application.builder().token(os.getenv("TELEGRAM_TOKEN")).build()
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    application.run_polling()
+# Main function to launch the bot
+def main():
+    app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    app.add_error_handler(error_handler)
+    print("🤖 Bot is running... Waiting for messages.")
+    app.run_polling()
 
 if __name__ == "__main__":
     main()
